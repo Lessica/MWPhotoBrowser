@@ -440,10 +440,15 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     if (parent && _hasBelongedToViewController) {
         [NSException raise:@"MWPhotoBrowser Instance Reuse" format:@"MWPhotoBrowser instances cannot be reused."];
     }
+    if (parent == nil) {
+        [self restorePreviousNavBarAppearance:YES];
+    }
+    [super willMoveToParentViewController:parent];
 }
 
 - (void)didMoveToParentViewController:(UIViewController *)parent {
     if (!parent) _hasBelongedToViewController = YES;
+    [super didMoveToParentViewController:parent];
 }
 
 #pragma mark - Nav Bar Appearance
@@ -1042,8 +1047,16 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 - (CGRect)frameForCaptionView:(MWCaptionView *)captionView atIndex:(NSUInteger)index {
     CGRect pageFrame = [self frameForPageAtIndex:index];
     CGSize captionSize = [captionView sizeThatFits:CGSizeMake(pageFrame.size.width, 0)];
+    CGFloat y = pageFrame.size.height - captionSize.height - (_toolbar.superview?_toolbar.frame.size.height:0);
+    if (@available(iOS 11.0, *)) {
+        if (_toolbar.superview) {
+            
+        } else {
+            y -= self.view.safeAreaInsets.bottom;
+        }
+    }
     CGRect captionFrame = CGRectMake(pageFrame.origin.x,
-                                     pageFrame.size.height - captionSize.height - (_toolbar.superview?_toolbar.frame.size.height:0),
+                                     y,
                                      pageFrame.size.width,
                                      captionSize.height);
     return CGRectIntegral(captionFrame);
