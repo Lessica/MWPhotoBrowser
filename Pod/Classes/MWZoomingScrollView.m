@@ -135,6 +135,7 @@
 	if (_photo && _photoImageView.image == nil) {
 		
 		// Reset
+        self.scrollEnabled = NO;
 		self.maximumZoomScale = 1;
 		self.minimumZoomScale = 1;
 		self.zoomScale = 1;
@@ -278,9 +279,19 @@
         maxScale = 1500.f;
     }
     
-    // Image is smaller than screen so no zooming!
-    if (xScale >= 1 && yScale >= 1) {
-        minScale = 1.0;
+    if (_photoBrowser.zoomSmallPhotos)
+    {
+        if (xScale >= 3.0 && yScale >= 3.0) {
+            minScale = 3.0;
+        }
+        if (maxScale <= minScale)
+            maxScale = minScale + 2.0;
+    } else {
+        // Image is smaller than screen so no zooming!
+        if (xScale >= 1.0 && yScale >= 1.0)
+        {
+            minScale = 1.0;
+        }
     }
     
     // Set min/max zoom
