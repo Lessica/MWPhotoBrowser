@@ -47,6 +47,8 @@
 		_photoImageView = [[MWTapDetectingImageView alloc] initWithFrame:CGRectZero];
 		_photoImageView.tapDelegate = self;
 		_photoImageView.contentMode = UIViewContentModeCenter;
+        _photoImageView.layer.magnificationFilter = kCAFilterNearest;
+        _photoImageView.layer.minificationFilter = kCAFilterNearest;
 		_photoImageView.backgroundColor = [UIColor blackColor];
 		[self addSubview:_photoImageView];
 		
@@ -72,6 +74,12 @@
 		self.showsVerticalScrollIndicator = NO;
 		self.decelerationRate = UIScrollViewDecelerationRateFast;
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        self.bounces = NO;
+        self.bouncesZoom = NO;
+        self.minimumZoomScale = 1.0;
+        self.maximumZoomScale = 1000.f;
+        self.clipsToBounds = YES;
+        self.scrollsToTop = NO;
         
     }
     return self;
@@ -264,10 +272,10 @@
     CGFloat minScale = MIN(xScale, yScale);                 // use minimum of these to allow the image to become fully visible
     
     // Calculate Max
-    CGFloat maxScale = 3;
+    CGFloat maxScale = 1000.f;
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
         // Let them go a bit bigger on a bigger screen!
-        maxScale = 4;
+        maxScale = 1500.f;
     }
     
     // Image is smaller than screen so no zooming!
@@ -400,7 +408,11 @@
 	} else {
 		
 		// Zoom in to twice the size
-        CGFloat newZoomScale = ((self.maximumZoomScale + self.minimumZoomScale) / 2);
+//        CGFloat newZoomScale = ((self.maximumZoomScale + self.minimumZoomScale) / 2);
+        CGFloat newZoomScale = ((3.0 + self.minimumZoomScale) / 2);
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            newZoomScale = ((4.0 + self.minimumZoomScale) / 2);
+        }
         CGFloat xsize = self.bounds.size.width / newZoomScale;
         CGFloat ysize = self.bounds.size.height / newZoomScale;
         [self zoomToRect:CGRectMake(touchPoint.x - xsize/2, touchPoint.y - ysize/2, xsize, ysize) animated:YES];
