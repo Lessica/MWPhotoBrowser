@@ -19,7 +19,9 @@
     id <SDWebImageOperation> _webImageOperation;
     PHImageRequestID _assetRequestID;
     PHImageRequestID _assetVideoRequestID;
-        
+    
+    SDWebImageOptions _imageOptions;
+    
 }
 
 @property (nonatomic, strong) UIImage *image;
@@ -102,10 +104,17 @@
 - (void)setup {
     _assetRequestID = PHInvalidImageRequestID;
     _assetVideoRequestID = PHInvalidImageRequestID;
+    _imageOptions = SDWebImageRetryFailed;
 }
 
 - (void)dealloc {
     [self cancelAnyLoading];
+}
+
+#pragma mark - Setters
+
+- (void)setImageOptions:(SDWebImageOptions)options {
+    _imageOptions = options;
 }
 
 #pragma mark - Video
@@ -213,7 +222,7 @@
     @try {
         SDWebImageManager *manager = [SDWebImageManager sharedManager];
         _webImageOperation = [manager downloadImageWithURL:url
-                                                   options:0
+                                                   options:_imageOptions
                                                   progress:^(NSInteger receivedSize, NSInteger expectedSize) {
                                                       if (expectedSize > 0) {
                                                           float progress = receivedSize / (float)expectedSize;

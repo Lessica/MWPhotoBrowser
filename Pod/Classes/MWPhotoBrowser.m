@@ -288,7 +288,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     }
     if (hideToolbar) {
         [_toolbar removeFromSuperview];
-    } else {
+    } else if (_toolbar.superview != self.view) {
         [self.view addSubview:_toolbar];
     }
     
@@ -639,6 +639,10 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         }
         [self performLayout];
         [self.view setNeedsLayout];
+    }
+    
+    if (_gridController) {
+        [_gridController.collectionView reloadData];
     }
     
 }
