@@ -451,6 +451,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 - (void)setNavBarAppearance:(BOOL)animated {
     [self.navigationController setNavigationBarHidden:NO animated:animated];
     UINavigationBar *navBar = self.navigationController.navigationBar;
+    navBar.titleTextAttributes = nil;
     navBar.tintColor = [UIColor whiteColor];
     navBar.barTintColor = nil;
     navBar.shadowImage = nil;
@@ -462,6 +463,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
 - (void)storePreviousNavBarAppearance {
     _didSavePreviousStateOfNavBar = YES;
+    _previousNavBarTitleAttributes = self.navigationController.navigationBar.titleTextAttributes;
     _previousNavBarBarTintColor = self.navigationController.navigationBar.barTintColor;
     _previousNavBarTranslucent = self.navigationController.navigationBar.translucent;
     _previousNavBarTintColor = self.navigationController.navigationBar.tintColor;
@@ -476,6 +478,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     if (_didSavePreviousStateOfNavBar) {
         [self.navigationController setNavigationBarHidden:_previousNavBarHidden animated:animated];
         UINavigationBar *navBar = self.navigationController.navigationBar;
+        navBar.titleTextAttributes = _previousNavBarTitleAttributes;
         navBar.tintColor = _previousNavBarTintColor;
         navBar.translucent = _previousNavBarTranslucent;
         navBar.barTintColor = _previousNavBarBarTintColor;
@@ -500,12 +503,16 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 }
 
 - (void)layoutVisiblePages {
+    [self layoutVisiblePagesForInterfaceOrientation:self.interfaceOrientation];
+}
+
+- (void)layoutVisiblePagesForInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
     
 	// Flag
 	_performingLayout = YES;
 	
 	// Toolbar
-	_toolbar.frame = [self frameForToolbarAtOrientation:self.interfaceOrientation];
+	_toolbar.frame = [self frameForToolbarAtOrientation:interfaceOrientation];
     
 	// Remember index
 	NSUInteger indexPriorToLayout = _currentPageIndex;
@@ -592,7 +599,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         [self hideControlsAfterDelay];
     
     // Layout
-    [self layoutVisiblePages];
+    [self layoutVisiblePagesForInterfaceOrientation:toInterfaceOrientation];
 	
 }
 
