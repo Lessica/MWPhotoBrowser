@@ -39,20 +39,20 @@
 
 #pragma mark - Class Methods
 
-+ (MWPhoto *)photoWithImage:(UIImage *)image {
-	return [[MWPhoto alloc] initWithImage:image];
++ (instancetype)photoWithImage:(UIImage *)image {
+	return [[self alloc] initWithImage:image];
 }
 
-+ (MWPhoto *)photoWithURL:(NSURL *)url {
-    return [[MWPhoto alloc] initWithURL:url];
++ (instancetype)photoWithURL:(NSURL *)url {
+    return [[self alloc] initWithURL:url];
 }
 
-+ (MWPhoto *)photoWithAsset:(PHAsset *)asset targetSize:(CGSize)targetSize {
-    return [[MWPhoto alloc] initWithAsset:asset targetSize:targetSize];
++ (instancetype)photoWithAsset:(PHAsset *)asset targetSize:(CGSize)targetSize {
+    return [[self alloc] initWithAsset:asset targetSize:targetSize];
 }
 
-+ (MWPhoto *)videoWithURL:(NSURL *)url {
-    return [[MWPhoto alloc] initWithVideoURL:url];
++ (instancetype)videoWithURL:(NSURL *)url {
+    return [[self alloc] initWithVideoURL:url];
 }
 
 #pragma mark - Init
