@@ -10,7 +10,6 @@
 #import "MWCommon.h"
 #import "MWPhotoBrowser.h"
 #import "MWPhotoBrowserPrivate.h"
-#import "SDImageCache.h"
 #import "UIImage+MWPhotoBrowser.h"
 
 #define PADDING                  10
@@ -104,7 +103,6 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     _pagingScrollView.delegate = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self releaseAllUnderlyingPhotos:NO];
-    [[SDImageCache sharedImageCache] clearMemory]; // clear memory
 }
 
 - (void)releaseAllUnderlyingPhotos:(BOOL)preserveCurrent {
@@ -312,7 +310,6 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     _toolbar = nil;
     _previousButton = nil;
     _nextButton = nil;
-    _progressHUD = nil;
     [super viewDidUnload];
 }
 
@@ -1657,7 +1654,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
             dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
             dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
                 if (self.activityViewController) {
-                    [self showProgressHUDWithMessage:nil];
+                    
                 }
             });
 
@@ -1666,7 +1663,6 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
             [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
                 weakSelf.activityViewController = nil;
                 [weakSelf hideControlsAfterDelay];
-                [weakSelf hideProgressHUD:YES];
             }];
             // iOS 8 - Set the Anchor Point for the popover
             if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
@@ -1681,42 +1677,6 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
     }
     
-}
-
-#pragma mark - Action Progress
-
-- (MBProgressHUD *)progressHUD {
-    if (!_progressHUD) {
-        _progressHUD = [[MBProgressHUD alloc] initWithView:self.view];
-        _progressHUD.minSize = CGSizeMake(120, 120);
-        _progressHUD.minShowTime = 1;
-        [self.view addSubview:_progressHUD];
-    }
-    return _progressHUD;
-}
-
-- (void)showProgressHUDWithMessage:(NSString *)message {
-    self.progressHUD.labelText = message;
-    self.progressHUD.mode = MBProgressHUDModeIndeterminate;
-    [self.progressHUD show:YES];
-    self.navigationController.navigationBar.userInteractionEnabled = NO;
-}
-
-- (void)hideProgressHUD:(BOOL)animated {
-    [self.progressHUD hide:animated];
-    self.navigationController.navigationBar.userInteractionEnabled = YES;
-}
-
-- (void)showProgressHUDCompleteMessage:(NSString *)message {
-    if (message) {
-        if (self.progressHUD.isHidden) [self.progressHUD show:YES];
-        self.progressHUD.labelText = message;
-        self.progressHUD.mode = MBProgressHUDModeCustomView;
-        [self.progressHUD hide:YES afterDelay:1.5];
-    } else {
-        [self.progressHUD hide:YES];
-    }
-    self.navigationController.navigationBar.userInteractionEnabled = YES;
 }
 
 @end

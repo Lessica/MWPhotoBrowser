@@ -6,21 +6,14 @@
 //  Copyright 2010 d3i. All rights reserved.
 //
 
-#import <SDWebImage/SDWebImageDecoder.h>
-#import <SDWebImage/SDWebImageManager.h>
-#import <SDWebImage/SDWebImageOperation.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "MWPhoto.h"
 #import "MWPhotoBrowser.h"
 
 @interface MWPhoto () {
-
-    BOOL _loadingInProgress;
-    id <SDWebImageOperation> _webImageOperation;
+    
     PHImageRequestID _assetRequestID;
     PHImageRequestID _assetVideoRequestID;
-    
-    SDWebImageOptions _imageOptions;
     
 }
 
@@ -104,17 +97,10 @@
 - (void)setup {
     _assetRequestID = PHInvalidImageRequestID;
     _assetVideoRequestID = PHInvalidImageRequestID;
-    _imageOptions = SDWebImageRetryFailed;
 }
 
 - (void)dealloc {
     [self cancelAnyLoading];
-}
-
-#pragma mark - Setters
-
-- (void)setImageOptions:(SDWebImageOptions)options {
-    _imageOptions = options;
 }
 
 #pragma mark - Video
@@ -156,8 +142,6 @@
 
 - (void)loadUnderlyingImageAndNotify {
     NSAssert([[NSThread currentThread] isMainThread], @"This method must be called on the main thread.");
-    if (_loadingInProgress) return;
-    _loadingInProgress = YES;
     @try {
         if (self.underlyingImage) {
             [self imageLoadingComplete];
@@ -167,7 +151,6 @@
     }
     @catch (NSException *exception) {
         self.underlyingImage = nil;
-        _loadingInProgress = NO;
         [self imageLoadingComplete];
     }
     @finally {
@@ -219,34 +202,12 @@
 
 // Load from local file
 - (void)_performLoadUnderlyingImageAndNotifyWithWebURL:(NSURL *)url {
-    @try {
-        SDWebImageManager *manager = [SDWebImageManager sharedManager];
-        _webImageOperation = [manager downloadImageWithURL:url
-                                                   options:_imageOptions
-                                                  progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-                                                      if (expectedSize > 0) {
-                                                          float progress = receivedSize / (float)expectedSize;
-                                                          NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
-                                                                                [NSNumber numberWithFloat:progress], @"progress",
-                                                                                self, @"photo", nil];
-                                                          [[NSNotificationCenter defaultCenter] postNotificationName:MWPHOTO_PROGRESS_NOTIFICATION object:dict];
-                                                      }
-                                                  }
-                                                 completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-                                                     if (error) {
-                                                         MWLog(@"SDWebImage failed to download image: %@", error);
-                                                     }
-                                                     _webImageOperation = nil;
-                                                     self.underlyingImage = image;
-                                                     dispatch_async(dispatch_get_main_queue(), ^{
-                                                         [self imageLoadingComplete];
-                                                     });
-                                                 }];
-    } @catch (NSException *e) {
-        MWLog(@"Photo from web: %@", e);
-        _webImageOperation = nil;
+    NSString *imagePath = [url path];
+    UIImage *image = [[UIImage alloc] initWithContentsOfFile:imagePath];
+    self.underlyingImage = image;
+    dispatch_async(dispatch_get_main_queue(), ^{
         [self imageLoadingComplete];
-    }
+    });
 }
 
 // Load from local file
@@ -304,10 +265,7 @@
     options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
     options.synchronous = false;
     options.progressHandler = ^(double progress, NSError *error, BOOL *stop, NSDictionary *info) {
-        NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
-                              [NSNumber numberWithDouble: progress], @"progress",
-                              self, @"photo", nil];
-        [[NSNotificationCenter defaultCenter] postNotificationName:MWPHOTO_PROGRESS_NOTIFICATION object:dict];
+        
     };
     
     _assetRequestID = [imageManager requestImageForAsset:asset targetSize:targetSize contentMode:PHImageContentModeAspectFit options:options resultHandler:^(UIImage *result, NSDictionary *info) {
@@ -321,14 +279,11 @@
 
 // Release if we can get it again from path or url
 - (void)unloadUnderlyingImage {
-    _loadingInProgress = NO;
 	self.underlyingImage = nil;
 }
 
 - (void)imageLoadingComplete {
     NSAssert([[NSThread currentThread] isMainThread], @"This method must be called on the main thread.");
-    // Complete so notify
-    _loadingInProgress = NO;
     // Notify on next run loop
     [self performSelector:@selector(postCompleteNotification) withObject:nil afterDelay:0 inModes:[NSArray arrayWithObject:NSRunLoopCommonModes]];
 }
@@ -339,10 +294,6 @@
 }
 
 - (void)cancelAnyLoading {
-    if (_webImageOperation != nil) {
-        [_webImageOperation cancel];
-        _loadingInProgress = NO;
-    }
     [self cancelImageRequest];
     [self cancelVideoRequest];
 }

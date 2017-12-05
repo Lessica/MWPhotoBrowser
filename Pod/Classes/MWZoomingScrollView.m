@@ -6,7 +6,6 @@
 //  Copyright 2010 d3i. All rights reserved.
 //
 
-#import <DACircularProgress/DACircularProgressView.h>
 #import "MWCommon.h"
 #import "MWZoomingScrollView.h"
 #import "MWPhotoBrowser.h"
@@ -20,8 +19,6 @@
     MWPhotoBrowser __weak *_photoBrowser;
 	MWTapDetectingView *_tapView; // for background taps
 	MWTapDetectingImageView *_photoImageView;
-	DACircularProgressView *_loadingIndicator;
-    UIImageView *_loadingError;
     
 }
 
@@ -51,21 +48,6 @@
         _photoImageView.layer.minificationFilter = kCAFilterNearest;
 		_photoImageView.backgroundColor = [UIColor blackColor];
 		[self addSubview:_photoImageView];
-		
-		// Loading indicator
-		_loadingIndicator = [[DACircularProgressView alloc] initWithFrame:CGRectMake(140.0f, 30.0f, 40.0f, 40.0f)];
-        _loadingIndicator.userInteractionEnabled = NO;
-        _loadingIndicator.thicknessRatio = 0.1;
-        _loadingIndicator.roundedCorners = NO;
-		_loadingIndicator.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin |
-        UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
-		[self addSubview:_loadingIndicator];
-
-        // Listen progress notifications
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(setProgressFromNotification:)
-                                                     name:MWPHOTO_PROGRESS_NOTIFICATION
-                                                   object:nil];
         
 		// Setup
 		self.backgroundColor = [UIColor blackColor];
@@ -93,7 +75,6 @@
 }
 
 - (void)prepareForReuse {
-    [self hideImageFailure];
     self.photo = nil;
     self.captionView = nil;
     self.selectedButton = nil;
@@ -124,9 +105,6 @@
     UIImage *img = [_photoBrowser imageForPhoto:_photo];
     if (img) {
         [self displayImage];
-    } else {
-        // Will be loading so show loading
-        [self showLoadingIndicator];
     }
 }
 
@@ -144,9 +122,6 @@
 		// Get image from browser as it handles ordering of fetching
 		UIImage *img = [_photoBrowser imageForPhoto:_photo];
 		if (img) {
-			
-			// Hide indicator
-			[self hideLoadingIndicator];
 			
 			// Set image
 			_photoImageView.image = img;
@@ -170,62 +145,6 @@
 		}
 		[self setNeedsLayout];
 	}
-}
-
-// Image failed so just show black!
-- (void)displayImageFailure {
-    [self hideLoadingIndicator];
-    _photoImageView.image = nil;
-    
-    // Show if image is not empty
-    if (![_photo respondsToSelector:@selector(emptyImage)] || !_photo.emptyImage) {
-        if (!_loadingError) {
-            _loadingError = [UIImageView new];
-            _loadingError.image = [UIImage imageForResourcePath:@"MWPhotoBrowser.bundle/ImageError" ofType:@"png" inBundle:[NSBundle bundleForClass:[self class]]];
-            _loadingError.userInteractionEnabled = NO;
-            _loadingError.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin |
-            UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
-            [_loadingError sizeToFit];
-            [self addSubview:_loadingError];
-        }
-        _loadingError.frame = CGRectMake(floorf((self.bounds.size.width - _loadingError.frame.size.width) / 2.),
-                                         floorf((self.bounds.size.height - _loadingError.frame.size.height) / 2),
-                                         _loadingError.frame.size.width,
-                                         _loadingError.frame.size.height);
-    }
-}
-
-- (void)hideImageFailure {
-    if (_loadingError) {
-        [_loadingError removeFromSuperview];
-        _loadingError = nil;
-    }
-}
-
-#pragma mark - Loading Progress
-
-- (void)setProgressFromNotification:(NSNotification *)notification {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSDictionary *dict = [notification object];
-        id <MWPhoto> photoWithProgress = [dict objectForKey:@"photo"];
-        if (photoWithProgress == self.photo) {
-            float progress = [[dict valueForKey:@"progress"] floatValue];
-            _loadingIndicator.progress = MAX(MIN(1, progress), 0);
-        }
-    });
-}
-
-- (void)hideLoadingIndicator {
-    _loadingIndicator.hidden = YES;
-}
-
-- (void)showLoadingIndicator {
-    self.zoomScale = 0;
-    self.minimumZoomScale = 0;
-    self.maximumZoomScale = 0;
-    _loadingIndicator.progress = 0;
-    _loadingIndicator.hidden = NO;
-    [self hideImageFailure];
 }
 
 #pragma mark - Setup
@@ -335,18 +254,6 @@
 	
 	// Update tap view frame
 	_tapView.frame = self.bounds;
-	
-	// Position indicators (centre does not seem to work!)
-	if (!_loadingIndicator.hidden)
-        _loadingIndicator.frame = CGRectMake(floorf((self.bounds.size.width - _loadingIndicator.frame.size.width) / 2.),
-                                         floorf((self.bounds.size.height - _loadingIndicator.frame.size.height) / 2),
-                                         _loadingIndicator.frame.size.width,
-                                         _loadingIndicator.frame.size.height);
-	if (_loadingError)
-        _loadingError.frame = CGRectMake(floorf((self.bounds.size.width - _loadingError.frame.size.width) / 2.),
-                                         floorf((self.bounds.size.height - _loadingError.frame.size.height) / 2),
-                                         _loadingError.frame.size.width,
-                                         _loadingError.frame.size.height);
 
 	// Super
 	[super layoutSubviews];
