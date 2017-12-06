@@ -16,7 +16,9 @@
 
 static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
-@implementation MWPhotoBrowser
+@implementation MWPhotoBrowser {
+    BOOL _firstLoaded;
+}
 
 #pragma mark - Init
 
@@ -79,6 +81,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     _recycledPages = [[NSMutableSet alloc] init];
     _photos = [[NSMutableArray alloc] init];
     _thumbPhotos = [[NSMutableArray alloc] init];
+    _firstLoaded = NO;
     if (@available(iOS 11.0, *)) {
         
     } else {
@@ -87,8 +90,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     _didSavePreviousStateOfNavBar = NO;
     self.automaticallyAdjustsScrollViewInsets = NO;
     
-    _hidesControlsOnSwipe = YES;
-    _enableHideTimer = YES;
+    _hidesControlsOnSwipe = NO;
+    _enableHideTimer = NO;
     
     // Listen for MWPhoto notifications
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -501,7 +504,14 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
-    [self layoutVisiblePages];
+    if (@available(iOS 11.0, *)) {
+        if (_firstLoaded == NO) {
+            [self layoutVisiblePages];
+            _firstLoaded = YES;
+        }
+    } else {
+        [self layoutVisiblePages];
+    }
 }
 
 - (void)layoutVisiblePages {
@@ -558,7 +568,9 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     [self positionVideoLoadingIndicator];
 	
 	// Adjust contentOffset to preserve page location based on values collected prior to location
-	_pagingScrollView.contentOffset = [self contentOffsetForPageAtIndex:indexPriorToLayout];
+    if (!_pagingScrollView.dragging && !_pagingScrollView.decelerating) {
+        _pagingScrollView.contentOffset = [self contentOffsetForPageAtIndex:indexPriorToLayout];
+    }
 	[self didStartViewingPageAtIndex:_currentPageIndex]; // initial
     
 	// Reset
@@ -1046,11 +1058,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     CGSize captionSize = [captionView sizeThatFits:CGSizeMake(pageFrame.size.width, 0)];
     CGFloat y = pageFrame.size.height - captionSize.height - (_toolbar.superview?_toolbar.frame.size.height:0);
     if (@available(iOS 11.0, *)) {
-        if (_toolbar.superview) {
-            
-        } else {
-            y -= self.view.safeAreaInsets.bottom;
-        }
+        y -= self.view.safeAreaInsets.bottom;
     }
     CGRect captionFrame = CGRectMake(pageFrame.origin.x,
                                      y,
