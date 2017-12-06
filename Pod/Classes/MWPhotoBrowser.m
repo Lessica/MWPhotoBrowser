@@ -796,8 +796,6 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
             [self loadAdjacentPhotosIfNecessary:photo];
         } else {
             
-            // Failed to load
-            [page displayImageFailure];
         }
         // Update nav
         [self updateNavigation];

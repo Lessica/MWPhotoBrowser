@@ -45,4 +45,6 @@ Pod::Spec.new do |s|
   # https://github.com/rs/SDWebImage/issues/1109
   # s.dependency 'SDWebImage', '~> 3.7', '!= 3.7.2'
 
+  s.dependency 'YYImage', '~> 1.0.4'
+
 end

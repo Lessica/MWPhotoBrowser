@@ -137,10 +137,7 @@
 			// Set zoom to minimum zoom
 			[self setMaxMinZoomScalesForCurrentBounds];
 			
-		} else  {
-
-            // Show image failure
-            [self displayImageFailure];
+		} else {
 			
 		}
 		[self setNeedsLayout];

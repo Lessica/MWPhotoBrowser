@@ -7,6 +7,7 @@
 //
 
 #import <AssetsLibrary/AssetsLibrary.h>
+#import <YYImage/YYImage.h>
 #import "MWPhoto.h"
 #import "MWPhotoBrowser.h"
 
@@ -175,15 +176,10 @@
             // Load from assets library
             [self _performLoadUnderlyingImageAndNotifyWithAssetsLibraryURL: _photoURL];
             
-        } else if ([_photoURL isFileReferenceURL]) {
+        } else {
             
             // Load from local file async
             [self _performLoadUnderlyingImageAndNotifyWithLocalFileURL: _photoURL];
-            
-        } else {
-            
-            // Load async from web (using SDWebImage)
-            [self _performLoadUnderlyingImageAndNotifyWithWebURL: _photoURL];
             
         }
         
@@ -191,6 +187,17 @@
         
         // Load from photos asset
         [self _performLoadUnderlyingImageAndNotifyWithAsset: _asset targetSize:_assetTargetSize];
+        
+    } else if (_videoURL) {
+        
+        NSURL *fileURL = _videoURL;
+        AVURLAsset* asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
+        AVAssetImageGenerator* imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+        [imageGenerator setAppliesPreferredTrackTransform:YES];
+        UIImage *image = [UIImage imageWithCGImage:[imageGenerator copyCGImageAtTime:CMTimeMake(0, 1) actualTime:nil error:nil]];
+        self.underlyingImage = image;
+        
+        [self imageLoadingComplete];
         
     } else {
         
@@ -201,21 +208,11 @@
 }
 
 // Load from local file
-- (void)_performLoadUnderlyingImageAndNotifyWithWebURL:(NSURL *)url {
-    NSString *imagePath = [url path];
-    UIImage *image = [[UIImage alloc] initWithContentsOfFile:imagePath];
-    self.underlyingImage = image;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self imageLoadingComplete];
-    });
-}
-
-// Load from local file
 - (void)_performLoadUnderlyingImageAndNotifyWithLocalFileURL:(NSURL *)url {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @autoreleasepool {
             @try {
-                self.underlyingImage = [UIImage imageWithContentsOfFile:url.path];
+                self.underlyingImage = [[YYImage alloc] initWithContentsOfFile:url.path];
                 if (!_underlyingImage) {
                     MWLog(@"Error loading photo from path: %@", url.path);
                 }

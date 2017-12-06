@@ -7,10 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <YYImage/YYImage.h>
 
 @protocol MWTapDetectingImageViewDelegate;
 
-@interface MWTapDetectingImageView : UIImageView {}
+@interface MWTapDetectingImageView : YYAnimatedImageView {}
 
 @property (nonatomic, weak) id <MWTapDetectingImageViewDelegate> tapDelegate;
 
