@@ -1648,34 +1648,33 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
             
         } else {
             
-            // Show activity view controller
-            NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
-            if (photo.caption) {
-                [items addObject:photo.caption];
-            }
-            self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
-            
-            // Show loading spinner after a couple of seconds
-            double delayInSeconds = 2.0;
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                if (self.activityViewController) {
-                    
+            if (@available(iOS 9.0, *)) {
+                // Show activity view controller
+                NSMutableArray *items = [NSMutableArray arrayWithObject:[photo underlyingImage]];
+                if (photo.caption) {
+                    [items addObject:photo.caption];
                 }
-            });
-
-            // Show
-            typeof(self) __weak weakSelf = self;
-            [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
-                weakSelf.activityViewController = nil;
-                [weakSelf hideControlsAfterDelay];
-            }];
-            // iOS 8 - Set the Anchor Point for the popover
-            if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
+                self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+                
+                // Show loading spinner after a couple of seconds
+                double delayInSeconds = 2.0;
+                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+                dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                    if (self.activityViewController) {
+                        
+                    }
+                });
+                
+                // Show
+                typeof(self) __weak weakSelf = self;
+                [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+                    weakSelf.activityViewController = nil;
+                    [weakSelf hideControlsAfterDelay];
+                }];
+                
                 self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+                [self presentViewController:self.activityViewController animated:YES completion:nil];
             }
-            [self presentViewController:self.activityViewController animated:YES completion:nil];
-
         }
         
         // Keep controls hidden
